@@ -38,7 +38,10 @@ self.addEventListener("fetch", (event) => {
 
   // Each installed shell and its assets stay in the same revision. A newly
   // registered worker precaches the next revision before taking control.
-  if (request.mode === "navigate") {
+  if (
+    request.mode === "navigate" &&
+    (url.pathname === "/" || url.pathname === "/index.html")
+  ) {
     event.respondWith(
       caches.open(CACHE).then(async (cache) => {
         const shell = await cache.match("/");

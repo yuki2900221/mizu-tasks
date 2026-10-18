@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ja">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>プライバシー | mizu</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f8fb;
+      color: #303847;
+      font:
+        16px/1.9 system-ui,
+        sans-serif;
+    }
+    main {
+      max-width: 680px;
+      margin: 40px auto;
+      padding: 28px;
+      background: #ffffffc9;
+      border: 1px solid white;
+      border-radius: 28px;
+    }
+    h1 {
+      font-size: 26px;
+    }
+    h2 {
+      font-size: 18px;
+      margin-top: 30px;
+    }
+    a {
+      color: #286acb;
+    }
+    small {
+      color: #687487;
+    }
+    @media (max-width: 720px) {
+      main {
+        margin: 12px;
+        padding: 24px;
+      }
+    }
+  </style>
+  <main>
+    <a href="/">mizu に戻る</a>
+    <h1>プライバシー</h1>
+    <small>更新日: 2026年10月18日</small>
+    <p>
+      mizu
+      は、メモとタスクを保存・整理するWebアプリです。運営とソースコードの管理は
+      <a href="https://github.com/yuki2900221/mizu-tasks"
+        >GitHubリポジトリの管理者</a
+      >が行います。
+    </p>
+    <h2>保存する情報と目的</h2>
+    <p>
+      ログインせずに使う場合、メモ・タスク・下書きをこのブラウザの保存領域に保存します。Googleログインでは、Googleのユーザー識別子、表示名、メールアドレスを取得し、アカウントの識別と画面表示に使用します。プロフィール写真は保存しません。
+    </p>
+    <p>
+      ログイン後のタスクとアカウント情報はCloudflare
+      D1に保存し、同じアカウント間の同期に使用します。保存済みタスクと直前のアカウント表示情報は、オフライン利用のため端末にも残ります。ログアウトすると、そのアカウントのタスクは通常の画面に表示されなくなります。共用端末ではブラウザのサイトデータも削除してください。
+    </p>
+    <h2>Google認証とCookie</h2>
+    <p>
+      Googleの openid・email・profile
+      権限だけを使用します。Gmail、Drive、連絡先にはアクセスしません。認証処理中のCookieは10分、ログイン状態のCookieは7日で期限切れになります。Googleのパスワードはmizuで取得・保存しません。
+    </p>
+    <h2>AIと外部サービス</h2>
+    <p>
+      「タスクに分解」を実行したときだけ、その入力欄のメモをCloudflare Workers
+      AIへ送信します。アカウント情報やタスク一覧を自動でAIに送信しません。生成結果は確認してから追加できます。
+    </p>
+    <p>
+      アプリの配信と処理にはCloudflare、認証にはGoogle、書体の取得にはGoogle
+      Fontsを使用します。各サービスには通信に必要なIPアドレスなどが渡ります。Cloudflareの運用ログを障害調査に使用する場合があります。広告・行動分析ツールは導入していません。Googleから取得した情報を販売せず、広告目的にも使用しません。
+    </p>
+    <h2>書き出し・削除・問い合わせ</h2>
+    <p>
+      設定からタスクをJSON形式で書き出せます。画面上の削除は同期用の削除記録としてクラウドに残ります。Googleとの連携はGoogleアカウントの接続設定で解除できますが、保存データが自動で完全削除されるものではありません。
+    </p>
+    <p>
+      アカウント情報とクラウド保存データの完全削除については、Googleの同意画面に表示されるユーザーサポート窓口に連絡してください。不具合は<a
+        href="https://github.com/yuki2900221/mizu-tasks/issues"
+        >GitHub Issues</a
+      >で受け付けます。公開Issueにはメールアドレスやメモ本文を書き込まないでください。
+    </p>
+  </main>
+</html>

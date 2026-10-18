@@ -1,39 +1,50 @@
 # Cloudflare本番公開
 
-現在、CloudflareとGoogle Cloudのアカウントは未作成です。以下を完了するまではGoogle認証・クラウド同期・Workers AIの実動作は未検証です。公開中のSites版は端末保存版です。
+正式URL: https://mizu-tasks.mizu-tasks.workers.dev
 
-## 1. アカウントとD1
+2026-10-18にCloudflare Workers・D1・Workers AIを設定し、Google認証を接続しました。認証情報はWorkerの非公開シークレットに保存しています。GitHub、フロントエンド、チャットに秘密値は含めていません。
 
-Cloudflareアカウントを作成して、ログインします。アカウント作成時の利用規約同意や認証入力は所有者が行います。
+## 現在のリソース
+
+- Worker: `mizu-tasks`
+- D1: `mizu-tasks-db`（APAC、スキーマ適用済み）
+- AI binding: `AI`
+- Secret: `GOOGLE_CLIENT_ID`、`GOOGLE_CLIENT_SECRET`、`SESSION_SECRET`
+- Googleクライアント: Webアプリケーション `mizu Web`
+- リダイレクトURI: `https://mizu-tasks.mizu-tasks.workers.dev/auth/google/callback`
+- Google権限: `openid email profile` のみ
+- プライバシー: `https://mizu-tasks.mizu-tasks.workers.dev/privacy`
+
+Google Auth PlatformのAudienceは、一般公開の最終確認待ちです。基本IDスコープだけを使うアプリにはテストユーザー制限の例外があり、実際のログインも確認済みです。[Google公式の公開状態の説明](https://developers.google.com/identity/protocols/oauth2/production-readiness/overview?hl=en)。ブランド名・ロゴの確認申請は別手続きで、現状のGoogle同意画面にはドメイン名が表示されます。
+
+## 再デプロイ
 
 ```sh
 npm ci
-npx wrangler login
-npx wrangler d1 create mizu-tasks-db
-```
-
-返されたdatabase_idを `wrangler.jsonc` のプレースホルダーに設定します。アカウントIDや秘密鍵をリポジトリに含める必要はありません。
-
-```sh
-npm run db:remote
+npm test
 npm run deploy
 ```
 
-初回公開時はGoogle認証は無効です。返されたHTTPSオリジンを次の設定に使います。
+DB変更がある場合は、SQLを `migrations/` に追加してから適用します。
 
-## 2. Google OAuth
+```sh
+npm run db:remote
+```
 
-Google Cloudプロジェクトを作成し、Google Auth Platformのブランディング、対象（Audience）、クライアントを設定します。
+GitHub Actionsはpush／PR時の型検査・自動テスト・ビルド用です。Cloudflareへの再デプロイは上のWranglerコマンドで行います。
 
-- クライアントの種類: ウェブアプリケーション
-- スコープ: openid、email、profileのみ
-- 承認済みリダイレクトURI: `https://<Workerのホスト名>/auth/google/callback`
-- テスト中は必要なGoogleアカウントをテストユーザーとして追加
-- 一般公開する場合は対象を本番公開へ変更し、Googleが要求する同意画面等の設定を完了
+## 別アカウントで再構築する場合
 
-ログイン用途だけなので、Google DriveやGmailの権限は要求しません。
+Cloudflare公式CLIで、必要な範囲だけを認可します。現在の接続はOSキーチェーンで保護しています。
 
-取得した値を対話入力し、シェルの履歴やソースに秘密を残さないでください。
+```sh
+npx wrangler login --device --use-keyring --scopes account:read user:read workers_scripts:write d1:write ai:write offline_access
+npx wrangler d1 create mizu-tasks-db
+```
+
+返されたdatabase_idを `wrangler.jsonc` に設定し、マイグレーションとデプロイを行います。Google CloudではGoogle Auth Platformのブランディング・対象・Webクライアントを作り、新しい公開URLの `/auth/google/callback` を登録します。ホームページと `/privacy` も設定してください。Googleに表示するブランド名・ロゴの検証が必要な場合は、所有するドメインとGoogleの検証手続きが必要です。
+
+秘密値は次の対話入力で登録します。引数・シェル履歴・ソースに書き込まないでください。
 
 ```sh
 npx wrangler secret put GOOGLE_CLIENT_ID
@@ -41,24 +52,18 @@ npx wrangler secret put GOOGLE_CLIENT_SECRET
 npx wrangler secret put SESSION_SECRET
 ```
 
-SESSION_SECRETはパスワード管理ツール等で生成した、32文字以上の十分ランダムな値を使用します。リポジトリにあるテスト値は本番に使用しません。
+SESSION_SECRETは32文字以上の十分ランダムな値を使います。現在の本番値は専用に安全な乱数で生成しており、ローカル試験値は使っていません。
 
-Googleのトークンは署名・発行者・audience・nonce・email_verifiedを検証します。OAuthの中間Cookieは10分、アプリセッションは7日です。
+ローカル認証を検証する場合は、別の開発用Googleプロジェクトを使い、`.env.example` と同じキーを未追跡の `.dev.vars` に設定します。開発用クライアントに `http://localhost:8788/auth/google/callback` を登録し、localhostと127.0.0.1を混在させないでください。
 
-ローカル検証時は `.env.example` と同じキーを未追跡の `.dev.vars` に設定し、Googleに `http://localhost:8788/auth/google/callback` も登録してください。localhostと127.0.0.1の混在は避けます。
+## 認証・同期・AI
 
-## 3. Workers AI
+GoogleのIDトークンは署名・発行者・audience・nonce・email_verifiedを検証します。OAuth中間Cookieは10分、アプリセッションは7日。CookieはHttpOnly、HTTPSではSecure、SameSite=Laxです。変更APIはOriginも検証します。端末内に残るアカウント表示キャッシュをサーバーの認証には使いません。
 
-`wrangler.jsonc` の `ai.binding = AI` を使用します。モデルは `@cf/meta/llama-3.3-70b-instruct-fp8-fast`。利用可能枠や課金条件は所有者のCloudflareアカウントで確認してください。AIは実行ボタンを押したときだけメモを送信し、結果を確認後に追加します。アプリ側でユーザーごとにUTC日付基準20回までに制限しています。
+タスクのDB操作にはセッション由来のuser_idを必ず指定します。オフライン編集・再読み込みができ、復帰時にセッションを確認して同期します。同一タスクを複数端末で同時編集した場合は、端末時刻による最新更新を採用します。共同編集向けではありません。
 
-## 4. 本番で残っている受け入れ試験
+Workers AIのモデルは `@cf/meta/llama-3.3-70b-instruct-fp8-fast`。日本語の実推論を本番で確認済みです。実行時だけ入力メモを送信し、候補を確認してから追加します。アプリ側ではユーザーごとにUTC日付基準20回／日に制限しています。Cloudflareの利用枠はアカウント全体にも適用されます。今回、カード登録・有料プランへの変更は行っていません。
 
-1. Googleでログイン → Cookie発行 → 名前表示 → ログアウト。
-2. 同じGoogleアカウントで別の端末から入り、D1のメモが復元される。
-3. 別のGoogleアカウントから他人のメモが見えない。
-4. オフライン編集 → 復帰 → クラウド同期。
-5. Workers AIで日本語メモを分解 → 候補を確認 → 追加。
-6. Googleでの認可拒否、セッション期限切れ、AI通信失敗を確認。
-7. 本物のiOS Safari・Android Chromeでキーボードとタッチフリックを確認。
+## 検証結果と範囲
 
-この試験に合格するまでは「本番機能の全テスト合格」と扱いません。
+Googleログイン→Cookie→D1保存→オフライン復帰同期→本物のAI推論→ログアウト・再ログインまで合格。[検証記録](TESTING.md)に手順と実行範囲を記載しています。複数の物理端末と実機iOS／Androidでの操作は未実施です。

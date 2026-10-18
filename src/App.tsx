@@ -46,11 +46,15 @@ import {
   newTask,
   filterTasks,
   localDate,
-  readTasks,
   stepStatus,
 } from "./model";
+import {
+  readLastUser,
+  rememberUser,
+  workspaceForUser,
+  type User,
+} from "./workspace";
 
-type User = { id: string; name: string; email: string };
 type Config = { google: boolean; ai: boolean; cloud: boolean };
 const navs = [
   { id: "all", label: "すべて", icon: Inbox },
@@ -316,10 +320,8 @@ function Sheet({
   );
 }
 export default function App() {
-  const [data, setData] = useState(() => ({
-    key: "mizu:tasks:guest",
-    items: readTasks("mizu:tasks:guest"),
-  }));
+  const [lastUser] = useState(readLastUser);
+  const [data, setData] = useState(() => workspaceForUser(lastUser));
   const tasks = data.items;
   const [draft, setDraft] = useState(() => {
     try {
@@ -341,7 +343,7 @@ export default function App() {
   const [suggestions, setSuggestions] = useState<
     { title: string; due: string }[]
   >([]);
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(lastUser);
   const [config, setConfig] = useState<Config>({
     google: false,
     ai: false,
@@ -363,45 +365,37 @@ export default function App() {
   const notify = (message: string) => setToast(message);
   useEffect(() => {
     let active = true;
-    Promise.all([
-      api<Config>("/api/config"),
-      api<{ user: User | null }>("/api/me"),
-    ])
-      .then(([conf, me]) => {
-        if (!active) return;
-        setConfig(conf);
-        if (me.user) {
-          const key = `mizu:tasks:${me.user.id}`;
-          const personal = readTasks(key);
-          setData((current) => {
-            const guest =
-              current.key === "mizu:tasks:guest"
-                ? current.items
-                : readTasks("mizu:tasks:guest");
-            const merged = [
-              ...personal,
-              ...guest.filter((t) => !personal.some((p) => p.id === t.id)),
-            ];
-            return { key, items: merged };
-          });
+    const refreshSession = () =>
+      Promise.all([
+        api<Config>("/api/config"),
+        api<{ user: User | null }>("/api/me"),
+      ])
+        .then(([conf, me]) => {
+          if (!active) return;
+          setConfig(conf);
+          rememberUser(me.user);
+          setData((current) => workspaceForUser(me.user, current));
           setUser(me.user);
-        }
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (active) setLoading(false);
-      });
+        })
+        .catch(() => {})
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+    refreshSession();
     const on = () => {
         setOnline(true);
         setSyncTick((t) => t + 1);
+        refreshSession();
       },
       off = () => setOnline(false);
     window.addEventListener("online", on);
     window.addEventListener("offline", off);
+    window.addEventListener("focus", refreshSession);
     return () => {
       active = false;
       window.removeEventListener("online", on);
       window.removeEventListener("offline", off);
+      window.removeEventListener("focus", refreshSession);
     };
   }, []);
   useEffect(() => {
@@ -1303,6 +1297,7 @@ export default function App() {
                 onClick={async () => {
                   try {
                     await api("/auth/logout", { method: "POST" });
+                    rememberUser(null);
                     location.reload();
                   } catch {
                     notify("ログアウトできませんでした");
@@ -1368,6 +1363,9 @@ export default function App() {
               <Drop small />
               mizu<span>1.0.0</span>
             </div>
+            <p className="setting-note">
+              <a href="/privacy">プライバシー</a>
+            </p>
           </Sheet>
         )}
       </AnimatePresence>

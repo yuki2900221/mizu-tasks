@@ -11,9 +11,9 @@
 
 ## 公開状況
 
-[公開アプリ](https://mizu-tasks-yuki.yukitodaikon.chatgpt.site) は **端末保存版**。Googleログイン・D1クラウド同期・Workers AIは、所有者のCloudflare／Google Cloudアカウントが未作成のため未接続です。未接続機能を成功したように表示しません。端末保存データはブラウザを消去すると失われるため、設定からJSONを書き出せます。
+[公開アプリ](https://mizu-tasks.mizu-tasks.workers.dev) をCloudflare Workersで配信しています。Googleログイン、D1クラウド同期、Workers AIの日本語タスク分解を本番ブラウザで確認済みです。ログインせず端末保存だけでも利用できます。
 
-アカウント接続後は同じコードをCloudflare Workersに公開できます。[本番設定手順](docs/DEPLOYMENT.md)を参照してください。
+[本番設定手順](docs/DEPLOYMENT.md)、[検証記録](docs/TESTING.md)、[プライバシー](https://mizu-tasks.mizu-tasks.workers.dev/privacy)。初期のSites版は暫定的な端末保存版です。現在の正式URLは上のCloudflare版です。
 
 ## 開発
 
@@ -46,7 +46,7 @@ npx wrangler deploy --dry-run
 | 通常のCSS | backdrop-filter、透過、内側の光、グラデーションを細かく調整してリキッドグラスを表現するため。画面の大半を部品ライブラリの既定デザインに依存させない。 |
 | Lucide React | 軽く統一された線画アイコンを利用するため。ブランドマークはローカルSVG。 |
 | DM Sans / Noto Sans JP | 英数字と日本語の字面を揃えるため。Google Fontsから取得し、失敗時はシステムのsans-serifへフォールバック。 |
-| localStorage | 小規模な個人メモをネットワーク待ちなしで保存・復元するため。下書きも保存。容量超過時は警告。大量データ向けのIndexedDBは将来の移行対象。 |
+| localStorage | 小規模な個人メモをネットワーク待ちなしで保存・復元するため。下書きと直前の作業アカウントも保存し、ログイン済みでもオフライン再起動できる。キャッシュを認証の証明には使わず、Workerが毎回署名を検証。容量超過時は警告。大量データ向けのIndexedDBは将来の移行対象。 |
 | Service Worker / Web App Manifest | ホーム画面への追加と、初回インストール完了直後からのオフライン再表示のため。ビルド時にJS・CSSの一覧とリビジョンを生成してまとめて保存する。認証・APIレスポンスはキャッシュ対象外。 |
 | Cloudflare Workers + Static Assets | APIとフロントエンドを同一オリジンで配信し、別サーバーの運用とCORS設定を減らすため。 |
 | Hono | Web標準のRequest/Responseを使い、Workers上で小さいAPI・認証ミドルウェアを構成するため。 |
@@ -61,7 +61,7 @@ npx wrangler deploy --dry-run
 | Prettier | TSX・CSS・設定ファイルを一貫した形で保守するため。 |
 | npm + lockfile | 追加のパッケージ管理ツールを要求せず、CIと開発環境で依存関係を再現するため。 |
 | GitHub Actions | push／PRごとに型検査・テスト・ビルドを実行するため。公開リポジトリでソースと検証内容を確認可能にする。 |
-| Sites（暫定公開） | Cloudflareアカウント未作成でも操作できる公開URLを提供するため。所有者のCloudflareへの正式公開とは区別。Sites独自ログインはアプリに導入しない。 |
+| Sites（暫定公開） | 初期段階で端末保存版を確認するために使用。現在の正式公開はCloudflare Workers。Sites独自ログインは導入しない。 |
 
 選定時に参照した一次資料: [Vite](https://vite.dev/guide/)、[Hono on Workers](https://hono.dev/docs/getting-started/cloudflare-workers)、[Static Assets](https://developers.cloudflare.com/workers/static-assets/binding/)、[D1](https://developers.cloudflare.com/d1/)、[Workers AIモデル](https://developers.cloudflare.com/workers-ai/models/llama-3.3-70b-instruct-fp8-fast/)、[Google OpenID Connect](https://developers.google.com/identity/openid-connect/openid-connect)。
 
@@ -69,7 +69,7 @@ npx wrangler deploy --dry-run
 
 未ログイン時はゲスト用、ログイン後はGoogleのsubに対応する保存領域を利用します。初回ログイン時に端末のゲストメモを取り込みます。ログインしたユーザーのCookieをWorker側で検証し、すべてのDB読み書きにuser_id条件を適用します。
 
-同期は更新時刻が新しいレコードを採用する方式です。削除は同期用のフラグとして保持します。オフライン時も編集でき、オンライン復帰後に同期します。同一タスクを複数端末で同時編集した場合は端末の時計に依存するため、共同編集用途には向きません。
+同期は更新時刻が新しいレコードを採用する方式です。削除は同期用のフラグとして保持します。オフライン時も編集・再読み込みができ、オンライン復帰時にセッションを確認して同期します。ログアウト時には直前のアカウント選択を解除し、ゲストの領域へ戻ります。同一タスクを複数端末で同時編集した場合は端末の時計に依存するため、共同編集用途には向きません。
 
 ## 構成
 

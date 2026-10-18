@@ -140,6 +140,19 @@ describe("offline app shell", () => {
     }
     expect(w.fetch).not.toHaveBeenCalled();
   });
+  it("serves the privacy document instead of replacing it with the app shell", async () => {
+    const w = worker();
+    w.handlers.install({ waitUntil: (p) => w.pending.push(p) });
+    await Promise.all(w.pending);
+    w.fetch.mockResolvedValue(new Response("privacy document"));
+    const event = w.event({
+      url: "https://mizu.test/privacy",
+      method: "GET",
+      mode: "navigate",
+    });
+    w.handlers.fetch(event);
+    expect(await (await event.response).text()).toBe("privacy document");
+  });
   it("keeps one installed revision when newer HTML is available online", async () => {
     const w = worker();
     w.handlers.install({ waitUntil: (p) => w.pending.push(p) });

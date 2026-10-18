@@ -32,7 +32,13 @@ await writeFile(
   new URL("sw.js", root),
   renderServiceWorker(
     template,
-    paths.map((path) => "/" + path),
+    paths.map(
+      (path) =>
+        "/" +
+        (path.endsWith(".html")
+          ? path.slice(0, -5).replace(/^index$/, "")
+          : path),
+    ),
     revision,
   ),
 );

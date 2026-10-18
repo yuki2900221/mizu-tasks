@@ -13,7 +13,7 @@
     {
       "binding": "DB",
       "database_name": "mizu-tasks-db",
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "9b395bae-ee27-44af-aa45-00c3a10f0998",
       "migrations_dir": "migrations",
     },
   ],

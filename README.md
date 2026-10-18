@@ -47,7 +47,7 @@ npx wrangler deploy --dry-run
 | Lucide React | 軽く統一された線画アイコンを利用するため。ブランドマークはローカルSVG。 |
 | DM Sans / Noto Sans JP | 英数字と日本語の字面を揃えるため。Google Fontsから取得し、失敗時はシステムのsans-serifへフォールバック。 |
 | localStorage | 小規模な個人メモをネットワーク待ちなしで保存・復元するため。下書きも保存。容量超過時は警告。大量データ向けのIndexedDBは将来の移行対象。 |
-| Service Worker / Web App Manifest | ホーム画面への追加と、取得済みアプリのオフライン再表示のため。認証・APIレスポンスはキャッシュ対象外。 |
+| Service Worker / Web App Manifest | ホーム画面への追加と、初回インストール完了直後からのオフライン再表示のため。ビルド時にJS・CSSの一覧とリビジョンを生成してまとめて保存する。認証・APIレスポンスはキャッシュ対象外。 |
 | Cloudflare Workers + Static Assets | APIとフロントエンドを同一オリジンで配信し、別サーバーの運用とCORS設定を減らすため。 |
 | Hono | Web標準のRequest/Responseを使い、Workers上で小さいAPI・認証ミドルウェアを構成するため。 |
 | Cloudflare D1 | タスク・ユーザーの関係と、ユーザー別SQL検索を扱うため。ユーザーIDとタスクIDの複合主キーで分離。 |

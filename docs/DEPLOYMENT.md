@@ -15,7 +15,7 @@
 - Google権限: `openid email profile` のみ
 - プライバシー: `https://mizu-tasks.mizu-tasks.workers.dev/privacy`
 
-Google Auth PlatformのAudienceは、一般公開の最終確認待ちです。基本IDスコープだけを使うアプリにはテストユーザー制限の例外があり、実際のログインも確認済みです。[Google公式の公開状態の説明](https://developers.google.com/identity/protocols/oauth2/production-readiness/overview?hl=en)。ブランド名・ロゴの確認申請は別手続きで、現状のGoogle同意画面にはドメイン名が表示されます。
+Google Auth PlatformのAudienceは **本番環境（外部）** に切り替え済みです。公開後にログアウト→Googleアカウント選択→本番コールバック→ログイン成功を確認しました。要求権限は引き続き基本IDスコープのみです。[Google公式の公開状態の説明](https://developers.google.com/identity/protocols/oauth2/production-readiness/overview?hl=en)。ブランド名・ロゴの確認申請は別手続きで、現在のGoogle同意画面にはドメイン名が表示されます。
 
 ## 再デプロイ
 

@@ -11,7 +11,7 @@
 
 ## 公開状況
 
-[公開アプリ](https://mizu-tasks.mizu-tasks.workers.dev) をCloudflare Workersで配信しています。Googleログイン、D1クラウド同期、Workers AIの日本語タスク分解を本番ブラウザで確認済みです。ログインせず端末保存だけでも利用できます。
+[公開アプリ](https://mizu-tasks.mizu-tasks.workers.dev) をCloudflare Workersで配信しています。Google認証は本番公開済みです。Googleログイン、D1クラウド同期、Workers AIの日本語タスク分解を本番ブラウザで確認済みです。ログインせず端末保存だけでも利用できます。
 
 [本番設定手順](docs/DEPLOYMENT.md)、[検証記録](docs/TESTING.md)、[プライバシー](https://mizu-tasks.mizu-tasks.workers.dev/privacy)。初期のSites版は暫定的な端末保存版です。現在の正式URLは上のCloudflare版です。
 
